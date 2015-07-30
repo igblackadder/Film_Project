@@ -12,7 +12,8 @@ Results
 The results of the analysis (so far) have been summarized in "Film Runtime 
 paper.pdf," this includes the background to the project, a brief description of 
 the analysis, and some of the results. The plots from the paper have also been 
-included as seperate files.
+included as seperate files. You should download the paper as it doesn't render 
+properly inside github
 
 Code
 ----

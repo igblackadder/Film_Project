@@ -117,7 +117,6 @@ class filmGrab():
             raise Timeout
         except ConnectionError:
             raise ConnectionError
-#            return self._fail("ConnectionError")
         except socket.error:
             return self._fail("socket error")
         except HTTPError as e:

@@ -23,7 +23,7 @@ df.drop(["title", "writer", "director"], axis=1, inplace=True)
 df = df[df["date"]>1935]
 df = df[df["date"]<2005]
 
-#We only want fictitious feature films so drop other genres.
+#We only want feature films so drop other genres.
 df=df[['Adult' not in value for value in df["genre"]]]
 df=df[['Documentary' not in value for value in df["genre"]]]
 df=df[['Short' not in value for value in df["genre"]]]
