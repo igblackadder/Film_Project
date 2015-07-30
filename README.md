@@ -2,8 +2,8 @@ Film Runtimes
 =============
 
 An analysis of film runtimes. The purpose of this project is to see if films 
-where the scriptwriter was also the director are shorter than other movies. A 
-list of nearly 200,000 movies was collated and then a Bayesian Analysis 
+where the scriptwriter went on to be the director were shorter than other films.
+A list of nearly 200,000 movies was collated and then a Bayesian Analysis 
 performed to try to answer this question.
 
 Results
