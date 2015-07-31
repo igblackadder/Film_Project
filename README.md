@@ -9,12 +9,12 @@ performed to try to answer this question.
 Results
 -------
 
-The results of the analysis (so far) have been summarized in "Film Runtime 
+The results of the analysis (so far) have been summarized in "Film runtime 
 paper.pdf," this includes the background to the project, a brief description of 
 the analysis, and some of the results. The plots from the paper have also been 
 included as seperate files in the figures folder. You should download the paper 
 as it doesn't always render properly inside github. You can download by clicking
-the "Film Runtime paper.pdf" link and then clicking "Raw" in the top right 
+the "Film runtime paper.pdf" link and then clicking "Raw" in the top right 
 corner of the page.
 
 Code
