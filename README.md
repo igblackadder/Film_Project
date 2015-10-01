@@ -40,8 +40,6 @@ The Model
 
 Film runtimes were modeled by year. Within each year the distribution of runtimes was assumed to be a gaussian. The mean of the gaussian was the sum of a global trend and deviations from each country involved in the films production. To ensure the deviations really were just deviations, the model demanded that the weighted sum of the deviations equalled zero (weighted by the number of films made in that country).
 
-\\[1_{n}\\]
-
 To Do
 -----
 
