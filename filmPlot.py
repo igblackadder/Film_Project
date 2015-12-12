@@ -1,7 +1,13 @@
-'''A script for plotting the results of the MCMC performed in the script filmModelMCMC.py 
+'''
+    A script for plotting the results of the MCMC performed in the script 
+    filmMCMC.py
     
-    Error bar plots are created and a gaussian process is employed to find the 
-    overall trend in the data
+    Error bar plots are created and a gaussian process regression is employed to
+    find the trend in the data.
+    
+    Plots are created for the global average of film runtimes and the deviations
+    from that average for different categories. The categories are a set of 
+    countries, languages and genres.
     
     '''
 
@@ -9,156 +15,191 @@ import pandas as pd
 import codecs
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.gaussian_process import GaussianProcess
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF
 import sys
 
 DIRECTORY = sys.path[0]
 
+#import the results of the MCMC
+df=pd.read_csv(DIRECTORY + '/results.csv', encoding='utf-8')
+df.sort(columns='date', inplace=True)
 
-def plot_tool(data, title, col1, col2, folder):
+#import the names of the countries, languages and genres
+with codecs.open(DIRECTORY + '/categories.txt', 'r', 'utf-8') as f:
+    countries=f.readline()
+    countries=np.array(countries.strip('\n').split(', '))
+    languages=f.readline()
+    languages=np.array(languages.strip('\n').split(', '))
+    genres=f.readline()
+    genres=np.array(genres.strip('\n').split(', '))
+
+
+def plot_tool(data, title, folder):
     '''
-        Creates an error bar plot possibly overlaid with a gaussian process line if there are more than 10 datapoints. The plot is saved in the given folder.
+        Creates an error bar plot overlaid with the result of a gaussian process
+        regression. This can be performed for the global average and for the 
+        deviations from the average. The latter is only plotted if there is data
+        for both writer/director overlap and non-overlap over at least 50 years 
+        with 10 or more films in each year. This ensures that the gaussian 
+        process regression is good and meaningful (this is quite conservative, 
+        the effects of relaxing this should be explored).
         
         Parameters
         ----------
         
         data: dataframe
-            pandas dataframe containing 'date', 'linMean' wich is the average
-            runtime and 95%errors in columns titled 'lin95Low' and 'lin95Hi'.
+            pandas dataframe containing 'date' which is the year the films were 
+            first released, 'QSame' which is True when one of the writers 
+            directed the movie and False otherwise (and it is a sentinal value 
+            of -1 when the category is the Global average), 'number' which are 
+            the number of films released that year, 'linMean' which is the 
+            average runtime of films that year and 95%errors in columns called 
+            'lin95Low' and 'lin95Hi'.
         
         title: string
-            name of the plot
-            
-        col1: string
-            the color of the plotted datapoints with errorbars
-            
-        col2: string
-            the color of the gaussian process line
-            
+            category of the plotted data e.g. "Romance" or "French"
+        
         folder: string
-            the folder into which a pdf of the plot is to be saved
+            the filepath into which the plots should be saved.
         
         '''
-    print title
     plt.figure(title, figsize=(13, 6))
     plt.title(title, fontsize=30)
-    plot_data(data, title, col1, folder)
-    Year = np.array(j[u'date'].tolist())
-    Mean = np.array(j[u'linMean'].tolist())
-    SD = np.array(j[u'linSD'].tolist())
-    if len(Year)>10:
-        plot_gaussian(Year, Mean, SD, title, col2, folder)
     
-    plt.xlim(1903, 2025)
+    if title == 'Global':
+        plot_data(data, 'green', 'Global Average')
+        plot_gaussian(data, 'green', 'Global Average')
+    else:
+        #seperate data into writer/director overlap and non-overlap
+        #demand that the results for each year be based on at least 10 films
+        same = data[(data.QSame == 'True') & (data.number>=10)]
+        diff = data[(data.QSame == 'False') & (data.number>=10)]
+        #demand that there must be at least fifty years worth of data
+        min_years = 50
+        if len(same)<min_years or len(diff)<min_years:
+            plt.close()
+            return
+        #save plots to different subfolders depending on their category
+        if title in countries:
+            folder +='/countries'
+        elif title in languages:
+            folder += '/languages'
+        else:
+            folder += '/genres'
+        plot_data(same, 'red', 'same')
+        plot_data(diff, 'blue', 'different')
+        
+        plot_gaussian(same, 'red')
+        plot_gaussian(diff, 'blue')
+        
+        plt.ylim(-60, 150)
+    
+    
+    plt.xlim(1903, 2016)
     plt.xlabel('Year', fontsize=25)
     plt.ylabel('Minutes', fontsize=25)
     plt.xticks(fontsize = 20)
     plt.yticks(fontsize = 20)
-    plt.subplots_adjust(left=0.10, bottom=0.18, top=0.90, right=0.95, wspace=0, hspace=0)
-    if title != 'Undeviated Average':
-        plt.ylim(-100, 100)
+    plt.subplots_adjust(left=0.10, bottom=0.18, top=0.90, right=0.95, \
+                        wspace=0, hspace=0)
+    
+    plt.legend(loc='best', fontsize=24, ncol=1, frameon=False)
     plt.savefig(folder +'/'+title+'.pdf')
+    plt.close()
 
-def plot_data(data, name, col, folder):
+
+def plot_data(data, col, label):
     '''
-        plots data with errorbars and adds a legend
+        Plots the results of the MCMC with errorbars
         
         Parameters
-        -------
+        ----------
         
         data: dataframe
-            pandas dataframe containing 'date', 'linMean' wich is the average 
-            runtime and 95%errors in columns titled 'lin95Low' and 'lin95Hi'.
-            
-        name: string
-            the title of the plot and the name under which the plot will be 
-            saved.
-            
+            pandas dataframe containing 'date', 'linMean' which is the average
+            runtime and 95%errors in columns called 'lin95Low' and 'lin95Hi'.
+        
         col: string
-            the color of the plotted datapoints and errorbars
-            
-        folder: string
-            the folder into which the pdf of the plot is to be saved
+            the color in which the plot the data
+        
+        label: string
+            entry for the plots legend. If the data are from films where the 
+            writer also directed then this could be 'same' otherwise is could be
+            'different'
         '''
-    year = data['date'].values
+    
+    #extract the results from the dataframe
+    year = np.float64(data['date'].values)
     mean = data['linMean'].values
     low = data['lin95Low'].values
     hi = data['lin95Hi'].values
-    year = year+0.05 if col=='red' else year-0.05 if col=='blue' else year
+    # add some jitter in the x-dimension to clearly seperate same and diff
+    # data points
+    if label == 'same':
+        year += .1
+    elif label=='different':
+        year -= .1
+    #calculate the 95% interval
     lowerBound = mean - low
     upperBound = hi - mean
-    plt.errorbar(year, mean, yerr=[lowerBound,upperBound], fmt='.', color=col, capsize=0, lw=2, markersize=8)
-    label='same' if col=='red' else 'diff' if col=='blue' else 'average'
+    
+    plt.errorbar(year, mean, yerr=[lowerBound,upperBound], fmt='.', color=col, \
+                 capsize=0, lw=2, markersize=8, alpha = 0.7)
+    #add ledend
     plt.plot ([],[],color=col,linewidth=3,label=label)
     plt.legend(loc=0, fontsize=24, ncol=2, frameon=False)
     plt.draw()
 
 
-def plot_gaussian(x, y, ySD, name, col, folder):
+def plot_gaussian(data, col):
     '''
-        Performs a Gaussian process regression to find the trend in the data. The trend is then plotted (both best fit and 95% confidence interval) and a legend added.
+        Plots the gaussian process regression with a characteristic length scale
+        of 10 years. Essentially this highlights the 'slow trend' in the data.
         
         Parameters
-        -------
+        ----------
         
-        x: list
-            integers corresponding to years. Must have the same length as y and ySD
-            
-        y: list
-            the average runtime of films in each of the years specified in x. 
-            
-        ySD: list
-            the standard deviation of the runtimes of films made in each of the years specified in x. 
+        data: dataframe
+        pandas dataframe containing 'date', 'linMean' which is the average
+        runtime and 'linSD' which is the standard deviation.
         
-        name: string
-            the title of the plot and the name under which the plot will be saved.
-            
         col: string
-            the color of the plotted gaussian process regression line and error
-            
-        folder: string
-            the folder into which the pdf of the plot is to be saved
-        
-        
+        the color in which the plot the data
         '''
-    gp = GaussianProcess(corr='squared_exponential', theta0=1e-2,
-                        thetaL=1e-9, thetaU=1e5,
-                        nugget=(ySD) ** 2,
-                        random_start=300)
-    gp.fit(np.atleast_2d(x).T, np.atleast_2d(y).T)
-    x_pred = np.atleast_2d(np.linspace(min(x)-2, max(x)+2, 1000)).T
-    y_pred, MSE = gp.predict(x_pred, eval_MSE=True)
-    x_pred=x_pred.ravel()
-    y_pred=y_pred.ravel()
-    sigma = np.sqrt(MSE)
-    label='same ' if col=='yellow' else 'diff ' if col=='cyan' else ''
-    plt.plot(x_pred, y_pred, col, label=label+'prediction')
-    plt.fill_between(x_pred, (y_pred - 1.9600 * sigma), y2=(y_pred + 1.9600 * sigma), alpha=0.5, color=col, label=label+'95% confidence interval')
-    plt.legend(loc=0, fontsize=24, ncol=2, frameon=False)
+    #extract the results from the dataframe
+    Year = np.array(data[u'date'].tolist())
+    Mean = np.array(data[u'linMean'].tolist())
+    SD = np.array(data[u'linSD'].tolist())
+    
+    #initialize the gaussian process. Note that the process is calculated with a
+    #length scale of 10years to give the 'slow trend' in the results.
+    length_scale = 10.
+    kernel = 1.* RBF(length_scale)
+    gp = GaussianProcessRegressor(kernel=kernel, sigma_squared_n=(SD) ** 2, \
+                                  normalize_y=True)
+    
+    #now fit the data and get the predicted mean and standard deviation
+    #Note: for reasons that are unclear, GaussianProcessRegressor won't take 1D
+    #arrays so the data are converted to 2D and then converted back for plotting
+    gp.fit(np.atleast_2d(Year).T, np.atleast_2d(Mean).T)
+    Year_array = np.atleast_2d(np.linspace(min(Year)-2, max(Year)+2, 100)).T
+    Mean_prediction, SD_prediction = gp.predict(Year_pred, return_std=True)
+    Year_array=Year_array.ravel()
+    Mean_prediction=Mean_prediction.ravel()
+    
+    #plot the predicted best fit
+    plt.plot(Year_array, Mean_prediction, col, alpha=1)
+    #plot the 95% confidence interval
+    plt.fill_between(Year_array, (Mean_prediction - 1.9600 * SD_prediction), \
+                     y2=(Mean_prediction + 1.9600 * SD_prediction), alpha=0.5, \
+                     color=col)
     plt.draw()
 
+
 if __name__=='__main__':
-    df=pd.read_csv(DIRECTORY + '/results.csv', encoding='utf-8')
-
-    with codecs.open(DIRECTORY + '/categories.txt', 'r', 'utf-8') as f:
-        countries=f.readline()
-        countries=np.array(countries.strip('\n').split(', '))
-        languages=f.readline()
-        languages=np.array(languages.strip('\n').split(', '))
-        genres=f.readline()
-        genres=np.array(genres.strip('\n').split(', '))
-
-    df.sort(columns='date', inplace=True)
-    grp=df.groupby(('QSame', 'category'))#, 'date'))
-
-    for i, j in grp:
-        if i[1]=='World':
-            plot_tool(j, 'Undeviated Average', 'green', 'magenta', DIRECTORY+'/plots')
-
-        elif i[0]=='True':
-            plot_tool(j, i[1], 'red', 'yellow', DIRECTORY+'/plots')
-        else:
-            plot_tool(j, i[1], 'blue', 'cyan', DIRECTORY+'/plots')
-    plt.close('all')
-
+    grp=df.groupby('category')
+    for name, categoryDF in grp:
+        print name
+        plot_tool(categoryDF, name, DIRECTORY+'/plots')
 
