@@ -1,7 +1,7 @@
 Film Runtimes
 =============
 
-In this project I aimed to see whether films were shorter when the scriptwriter was also the director. I conjectured that writers who were thinking visually would make shorter movies. To address this question, a list of nearly 200,000 films was collated and then machine learning (specifically a Markov Chain Monte Carlo analysis) was performed.
+This project aims to see whether films are shorter when the scriptwriter is also the director. I conjecture that writers who are thinking visually make shorter movies. To answer this question, I collated a list of nearly 200,000 films and then machine learning (specifically a Markov Chain Monte Carlo analysis) was performed to look for differences in runtimes.
 
 A complete write-up of this project is contained in film.pdf, it contains more on the motivation behind this project, details on the analysis and a discussion of the results.
 
