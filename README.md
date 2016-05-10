@@ -1,12 +1,14 @@
 Film Runtimes
 =============
 
-An analysis of film runtimes. The purpose is to see if films are shorter when the script-writer and the director are the same person as it was conjectured that writers who were thinking visually would make shorter movies. A list of nearly 200,000 films was collated and then a Markov Chain Monte Carlo analysis was performed to asses this hypothesis.
+In this project I aimed to see whether films were shorter when the scriptwriter was also the director. I conjectured that writers who were thinking visually would make shorter movies. To address this question, a list of nearly 200,000 films was collated and then machine learning (specifically a Markov Chain Monte Carlo analysis) was performed.
 
-A complete write-up of this project is contained in film.pdf, it contains more motivation of the hypothesis, details of the model and a discussion of the results.
+A complete write-up of this project is contained in film.pdf, it contains more on the motivation behind this project, details on the analysis and a discussion of the results.
+
+Below is a brief description of each of the files contained in this repository. My CV is also included, it contains my email address should you wish to contact me about this project.
 
 Files
------
+----- 
 
 film.pdf is a report detailing the hypothesis, the steps taken to get the data and a detailed look at the model used in the analysis. Finally there is a discussion of the results.
 
